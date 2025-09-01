@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Undangan Pernikahan | Lailiah & Adji</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <!-- QR Code -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Montserrat', sans-serif;
+      background: linear-gradient(135deg, #f8f5f2, #e8ded7);
+      color: #333;
+      text-align: center;
+      padding: 20px;
+    }
+    header {
+      margin-bottom: 30px;
+    }
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.5em;
+      color: #5a4634;
+      margin-bottom: 10px;
+    }
+    h2 {
+      font-family: 'Playfair Display', serif;
+      color: #6b5240;
+      margin-bottom: 20px;
+    }
+    .rsvp-form {
+      max-width: 500px;
+      margin: auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      text-align: left;
+    }
+    .form-group { margin-bottom: 15px; }
+    label { font-weight: 500; display: block; margin-bottom: 5px; }
+    input, select, textarea {
+      width: 100%; padding: 10px; border: 1px solid #ddd;
+      border-radius: 8px; font-size: 14px;
+    }
+    .btn {
+      background: linear-gradient(135deg, #d2bba0, #b89b83);
+      color: #fff; padding: 12px 25px; border: none;
+      border-radius: 30px; cursor: pointer;
+      font-size: 15px; font-weight: 500;
+      transition: all 0.3s ease; display: block; margin: auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+    }
+    #qrResult {
+      margin-top: 25px;
+      display: none;
+      text-align: center;
+    }
+    #qrResult h3 {
+      font-family: 'Playfair Display', serif;
+      margin-bottom: 15px;
+      color: #5a4634;
+    }
+    #qrContainer canvas {
+      animation: fadeInScale 0.8s ease forwards;
+    }
+    @keyframes fadeInScale {
+      from { opacity: 0; transform: scale(0.6); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Undangan Pernikahan</h1>
+    <p>Lailiah & Adji</p>
+    <p>24 Desember 2025</p>
+  </header>
+
+  <section>
+    <h2>Konfirmasi Kehadiran</h2>
+    <div class="rsvp-form">
+      <form id="rsvpForm">
+        <div class="form-group">
+          <label for="name">Nama Lengkap</label>
+          <input type="text" id="name" required>
+        </div>
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" required>
+        </div>
+        <div class="form-group">
+          <label for="guests">Jumlah Tamu</label>
+          <input type="number" id="guests" value="1" min="1" required>
+        </div>
+        <div class="form-group">
+          <label for="attending">Konfirmasi Kehadiran</label>
+          <select id="attending" required>
+            <option value="yes">Ya, saya akan hadir</option>
+            <option value="no">Maaf, tidak dapat hadir</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="message">Pesan untuk Mempelai</label>
+          <textarea id="message" rows="3"></textarea>
+        </div>
+        <button type="button" class="btn" id="showBarcode">Kirim Konfirmasi</button>
+      </form>
+
+      <!-- Barcode muncul di sini -->
+      <div id="qrResult">
+        <h3>Barcode Anda</h3>
+        <div id="qrContainer"></div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const TELEGRAM_BOT_TOKEN = "8232193737:AAFPwWlpeGvaydOiUj0-2JaH02JzKm7TTpA";
+    const TELEGRAM_CHAT_ID = "7198927760";
+
+    function dataURLtoFile(dataurl, filename) {
+      let arr = dataurl.split(","), mime = arr[0].match(/:(.*?);/)[1],
+          bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+      while(n--) u8arr[n] = bstr.charCodeAt(n);
+      return new File([u8arr], filename, {type:mime});
+    }
+
+    async function sendToTelegram(message, qrDataUrl) {
+      const formData = new FormData();
+      formData.append("chat_id", TELEGRAM_CHAT_ID);
+      formData.append("caption", message);
+      formData.append("photo", dataURLtoFile(qrDataUrl, "qrcode.png"));
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`, {
+        method:"POST", body:formData
+      });
+    }
+
+    document.getElementById("showBarcode").addEventListener("click", async function () {
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const guests = document.getElementById("guests").value;
+      const attending = document.getElementById("attending").value;
+      const message = document.getElementById("message").value;
+
+      if(!name || !email){ alert("Harap isi semua data."); return; }
+
+      const qrData = `Nama: ${name}\nEmail: ${email}\nTamu: ${guests}\nHadir: ${attending}\nPesan: ${message}`;
+      const qrCanvas = document.createElement("canvas");
+      await QRCode.toCanvas(qrCanvas, qrData);
+
+      const qrContainer = document.getElementById("qrContainer");
+      qrContainer.innerHTML = "";
+      qrContainer.appendChild(qrCanvas);
+      document.getElementById("qrResult").style.display = "block";
+
+      const qrDataUrl = qrCanvas.toDataURL("image/png");
+      const telegramMsg = `📩 RSVP Baru:\n👤 Nama: ${name}\n📧 Email: ${email}\n👥 Jumlah Tamu: ${guests}\n✅ Kehadiran: ${attending}\n💌 Pesan: ${message}`;
+      await sendToTelegram(telegramMsg, qrDataUrl);
+
+      alert("✅ Konfirmasi berhasil!\nBarcode sudah muncul & terkirim ke Telegram.");
+      document.getElementById("rsvpForm").reset();
+    });
+  </script>
+</body>
+</html>
